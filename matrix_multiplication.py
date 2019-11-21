@@ -2,6 +2,8 @@ from __future__ import division
 from numba import cuda
 import numpy
 import math
+import time
+
 
 # CUDA kernel
 @cuda.jit
@@ -15,18 +17,24 @@ def matmul(A, B, C):
             tmp += A[row, k] * B[k, col]
         C[row, col] = tmp
         
+size = 1000
 # Host code
+start_time = time.time()
 
-# Initialize the data arrays
-A = numpy.full((24, 12), 3, numpy.float) # matrix containing all 3's
-B = numpy.full((12, 22), 4, numpy.float) # matrix containing all 4's
+# Initialize the data array
+#A = numpy.random.randint(0, 10, size=(size,size))
+#B = numpy.random.randint(0, 10, size=(size,size))
+
+A = numpy.full((size, size), 10, numpy.float) # matrix containing all 3's
+B = numpy.full((size, size), 10, numpy.float) # matrix containing all 4's
 
 # Copy the arrays to the device
 A_global_mem = cuda.to_device(A)
 B_global_mem = cuda.to_device(B)
 
+
 # Allocate memory on the device for the result
-C_global_mem = cuda.device_array((24, 22))
+C_global_mem = cuda.device_array((size, size))
 
 # Configure the blocks
 threadsperblock = (16, 16)
@@ -40,4 +48,5 @@ matmul[blockspergrid, threadsperblock](A_global_mem, B_global_mem, C_global_mem)
 # Copy the result back to the host
 C = C_global_mem.copy_to_host()
 
-print(C)
+#print(C)
+print("--- %s seconds ---" % (time.time() - start_time))
